@@ -84,7 +84,7 @@ class ApiVentas
              ************************************************************
             <br>
          </span>
-     EOF;
+        EOF;
 
         $pdf->writeHTML($bloque_salto, false, false, false, false, '');
         $pdf->write1DBarcode($venta->codigo, 'C39', 34, '', '', 7, 0.3);
