@@ -21,6 +21,14 @@
         cargarInformacion();
 
         function mostrarInfo(resultado){
+            const devoluciones = resultado.devoluciones;
+            const panel = document.querySelector('#reporte-devoluciones');
+            if (panel && devoluciones) {
+                panel.hidden = Number(devoluciones.total) === 0;
+                panel.querySelectorAll('[data-devoluciones]').forEach(el => {
+                    el.textContent = Number(devoluciones[el.dataset.devoluciones]).toLocaleString('es-CO', {style:'currency', currency:'COP'});
+                });
+            }
       
             ingresos.textContent = resultado.ingresos
             ganancias.textContent = resultado.ganancias

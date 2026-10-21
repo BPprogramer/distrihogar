@@ -38,6 +38,13 @@ use Controllers\ProductosVentasController;
 
 $router = new Router();
 
+$router->get('/devoluciones', [Controllers\DevolucionesController::class, 'index']);
+$router->get('/api/devoluciones', [Controllers\DevolucionesController::class, 'listar']);
+$router->get('/api/devoluciones/buscar', [Controllers\DevolucionesController::class, 'buscar']);
+$router->get('/api/devoluciones/venta', [Controllers\DevolucionesController::class, 'venta']);
+$router->get('/api/devoluciones/detalle', [Controllers\DevolucionesController::class, 'detalle']);
+$router->post('/api/devoluciones/guardar', [Controllers\DevolucionesController::class, 'guardar']);
+
 
 // Login
 $router->get('/', [UsuariosController::class, 'redireccionLogin']);

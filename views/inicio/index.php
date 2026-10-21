@@ -2,6 +2,7 @@
 
 <section class="content" id="inicio">
     <div class="container-fluid">
+        <?php include __DIR__ . '/../templates/resumen-devoluciones.php'; ?>
         <div class="row">
             <div class="col-12">
                 <div class="card">

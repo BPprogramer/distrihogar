@@ -39,13 +39,16 @@
             const metodoVenta = document.querySelector('#metodo-venta');
             const estadoVenta = document.querySelector('#estado-venta');
             
+            let resumenDev = document.querySelector('#resumen-devoluciones-venta');
+            if (!resumenDev) { resumenDev = document.createElement('p'); resumenDev.id = 'resumen-devoluciones-venta'; saldoVenta.parentElement.parentElement.appendChild(resumenDev); }
+            resumenDev.textContent = venta.devoluciones_total > 0 ? `Devoluciones: $${Number(venta.devoluciones_total).toLocaleString('en')} · Reducción de deuda: $${Number(venta.deuda_reducida).toLocaleString('en')} · Reembolsos: $${Number(venta.reembolsos).toLocaleString('en')}` : '';
             codigoVenta.textContent = venta.codigo
             clienteVenta.textContent = venta.nombre_cliente
             fechaVenta.textContent = venta.fecha
             totalVenta.textContent = (parseFloat(venta.total_factura)).toLocaleString('en');
             totalVentaSinComision.textContent = (parseFloat(venta.total)).toLocaleString('en');
             recaudoVenta.textContent = (parseFloat(venta.recaudo)).toLocaleString('en');
-            saldoVenta.textContent = (parseFloat(venta.total_factura - venta.recaudo)).toLocaleString('en');
+            saldoVenta.textContent = (Number(venta.saldo_pendiente ?? (venta.total_factura - venta.recaudo))).toLocaleString('en');
 
          
             if(venta.metodo_pago==2){

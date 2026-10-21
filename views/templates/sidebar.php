@@ -65,6 +65,11 @@
               </a>
             </li>
 
+            <li class="nav-item">
+              <a href="/devoluciones" class="nav-link <?php echo pagina_actual('devoluciones') ? 'active' : '' ?>" style="<?php echo pagina_actual('devoluciones') ? 'background-color:white !important;' : '' ?>">
+                <i class="fas fa-undo nav-icon"></i><p>Devoluciones</p>
+              </a>
+            </li>
             <?php if ($_SESSION['roll'] == 1) { ?>
               <li class="nav-item">
                 <a href="/reporte-ventas" class="nav-link <?php echo $_SERVER['REQUEST_URI'] == "/reporte-ventas" ? 'active' : '' ?>" style="<?php echo  $_SERVER['REQUEST_URI'] == "/reporte-ventas"  ? 'background-color:white !important;' : '' ?>">

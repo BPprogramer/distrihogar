@@ -302,12 +302,18 @@
 
                 const tdTotal = document.createElement('TD');
                 tdTotal.textContent = '$' + parseFloat(total).toLocaleString('en');
+                if (fiado.devoluciones_total > 0) {
+                    const nota = document.createElement('small');
+                    nota.className = 'd-block text-muted';
+                    nota.textContent = 'Devoluciones: $' + Number(fiado.devoluciones_total).toLocaleString('en');
+                    tdTotal.appendChild(nota);
+                }
 
                 const tdAbono = document.createElement('TD');
                 tdAbono.textContent = '$' + parseFloat(recaudo).toLocaleString('en');
 
                 const tdDeuda = document.createElement('TD');
-                tdDeuda.textContent = '$' + parseFloat(total - recaudo).toLocaleString('en');
+                tdDeuda.textContent = '$' + Number(fiado.saldo_pendiente).toLocaleString('en');
 
                 const tdEstado = document.createElement('TD');
 
@@ -320,7 +326,7 @@
                 btnEstado.classList.add('btn', 'w-40', 'btn-inline', 'btn-sm');
 
                 if (estado == 0) {
-                    total_deuda = total_deuda + parseFloat(total) - parseFloat(recaudo);
+                    total_deuda = total_deuda + Number(fiado.saldo_pendiente);
                     btnEstado.textContent = 'Pendiente';
                     btnEstado.classList.add('btn-danger');
                 } else {
@@ -383,7 +389,7 @@
             fechaVenta.textContent = fiado.fecha
             totalVenta.textContent = (parseFloat(fiado.total)).toLocaleString('en');
             recaudoVenta.textContent = (parseFloat(fiado.recaudo)).toLocaleString('en');
-            saldoVenta.textContent = (parseFloat(fiado.total - fiado.recaudo)).toLocaleString('en');
+            saldoVenta.textContent = (Number(fiado.saldo_pendiente)).toLocaleString('en');
 
             const bodyProductos = document.querySelector('#body-productos-fiados');
             limpiarHtml(bodyProductos);
