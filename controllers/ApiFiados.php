@@ -5,7 +5,6 @@
 use Model\Caja;
 use Model\Cuota;
 use Model\Venta;
-use Model\Devolucion;
 use Model\Cliente;
 use Model\PagoCuota;
 use Model\ProductosVenta;
@@ -32,7 +31,6 @@ use Model\ProductosVenta;
             //$pagos_cuotas = PagoCuota::toDoJoin('pago_cuotas','id','pago_cuotas_id','cliente_id',$cliente_id);
             $pagos_cuotas = Cuota::toDoJoin('pago_cuotas','id','pago_cuotas_id','cliente_id',$cliente_id);
             $fiados= PagoCuota::toDoJoin('ventas','id','venta_id','cliente_id',$cliente_id);
-            foreach ($fiados as $fiado) Devolucion::informar($fiado, $fiado->venta_id);
             echo json_encode(['pagos_cuotas'=>$pagos_cuotas, 'fiados'=>$fiados]);
   
 
@@ -77,7 +75,6 @@ use Model\ProductosVenta;
             }
 
             $cuota = Cuota::where('numero_pago', $numero_pago);
-            if (!$cuota) { echo json_encode(['type'=>'error','msg'=>'No se encontró el pago.']); return; }
             $caja = Caja::where('id', $cuota->caja_id);
             if(!$caja){
                 echo json_encode(['type'=>'error', 'msg'=>'Hubo un error, porfavor intente nuevamente']);
@@ -90,9 +87,6 @@ use Model\ProductosVenta;
             $pago_cuotas = PagoCuota::find($cuota->pago_cuotas_id);
             $venta  = Venta::find($pago_cuotas->venta_id);
 
-            if (Devolucion::consulta('SELECT id FROM devoluciones WHERE venta_id=? LIMIT 1', [$venta->id])) {
-                echo json_encode(['type'=>'error','msg'=>'La venta tiene devoluciones. No se pueden eliminar sus abonos.']); return;
-            }
             $venta->recaudo = $venta->recaudo - $cuota->monto;
             $venta->estado = 0;
 
@@ -108,8 +102,8 @@ use Model\ProductosVenta;
                 $db->commit();
                 echo json_encode(['type' => 'success', 'msg' => 'Pago eliminado exitosamente']);
                 return;
-            } catch (\Throwable $e) {
-                error_log('Fiados: '.$e->getMessage());
+            } catch (Exception $e) {
+                debuguear($e);
                 $db->rollback();
                 echo json_encode(['type'=>'error', 'msg'=>'Hubo un error, Intenta nuevamente']);
                 return;
@@ -141,12 +135,6 @@ use Model\ProductosVenta;
             $db = PagoCuota::getDB();
             $pago_ventas = PagoCuota::toDoJoin('ventas', 'id', 'venta_id', 'cliente_id', $_POST['cliente_id']);
             $pago_ventas = array_reverse($pago_ventas);
-            foreach ($pago_ventas as $v) Devolucion::informar($v, $v->venta_id);
-            $deudaDisponible = array_sum(array_column($pago_ventas, 'saldo_pendiente'));
-            $montoValidado = filter_var($_POST['monto'] ?? null, FILTER_VALIDATE_FLOAT);
-            if (!$montoValidado || $montoValidado <= 0 || round($montoValidado, 2) > round($deudaDisponible, 2)) {
-                echo json_encode(['type'=>'error','msg'=>'El abono debe ser positivo y no superar la deuda pendiente actual.']); return;
-            }
 
             if(!$pago_ventas){
                 echo json_encode(['type'=>'error', 'msg'=>'Hubo un error, porfavor intente nuevamente']);
@@ -155,7 +143,7 @@ use Model\ProductosVenta;
 
             //si todos los fiados fueron pagados no podemos pagarlos otra vez
             $existe_fiados = array_filter($pago_ventas,function($pago_venta){
-                if($pago_venta->saldo_pendiente > 0){
+                if($pago_venta->estado == 0){
                     return $pago_venta;
                 }
                
@@ -175,7 +163,7 @@ use Model\ProductosVenta;
 
             try {
 
-                $monto = round($montoValidado, 2);
+                $monto = $_POST['monto'];
                 $sobrante = $monto;
             
              
@@ -184,7 +172,7 @@ use Model\ProductosVenta;
                     if($sobrante>0){
                         $venta = new Venta();
                         $venta->sincronizar($pago_venta); //venta que se va a editar el recuado ya que se le va a añadir un pago
-                        $saldo = $pago_venta->saldo_pendiente;
+                        $saldo = $venta->total - $venta->recaudo;
 
                         $numero_pago = 200000;
                         $ultima_cuota = Cuota::get(1);
@@ -207,7 +195,7 @@ use Model\ProductosVenta;
                         if($sobrante>=$saldo){
                             $pago = $saldo; //monto del pago
                             $sobrante = $sobrante - $pago;
-                            $venta->recaudo = round($venta->recaudo + $pago, 2);
+                            $venta->recaudo = $venta->total;
                             $venta->estado = 1;
                             
 
@@ -221,13 +209,13 @@ use Model\ProductosVenta;
                             $pago = $sobrante;
                             $sobrante = 0;
                             $venta->recaudo = $venta->recaudo + $pago;
-                            $cuota->saldo = round($saldo - $pago, 2);
+                            $cuota->saldo = $venta->total - $venta->recaudo;
                             $cuota->monto = $pago;
                         }
 
     
                         $caja->numero_transacciones = $caja->numero_transacciones + 1;
-                        // Conservar la fecha de la venta; el abono tiene su propia fecha.
+                        $venta->fecha = date('Y-m-d H:i:s');
                         $venta =$venta->guardar();
                         $cuota->cuota_inicial=0;
                         $cuota = $cuota->guardar();
@@ -243,7 +231,7 @@ use Model\ProductosVenta;
                 $db->commit();
                 echo json_encode(['type' => 'success', 'msg' => 'Pago creado exitosamente']);
                 return;
-            } catch (\Throwable $e) {
+            } catch (Exception $e) {
              
                 $db->rollback();
                 echo json_encode(['type'=>'error', 'msg'=>'Hubo un error, Intenta nuevamente']);

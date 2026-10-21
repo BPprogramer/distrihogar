@@ -155,8 +155,6 @@ use Model\Usuario;
                 return;
             }
 
-            if ((int)$caja->estado !== 0) { echo json_encode(['type'=>'error','msg'=>'Esta caja ya está cerrada.']); return; }
-
             $ventas = Venta::whereArray(['caja_id'=>$caja->id]);
             $total_ventas  = 0;
             if($ventas){
@@ -193,8 +191,6 @@ use Model\Usuario;
                 }  
             }
 
-            $reembolsos = \Model\Devolucion::consulta('SELECT COALESCE(SUM(reembolso),0) total FROM devoluciones WHERE caja_id=?', [$caja->id])[0]['total'];
-            $total_ventas -= (float)$reembolsos;
             $caja->recaudo_ventas = $total_ventas;
             $caja->fecha_cierre = date('Y-m-d H:i:s');
             $caja->estado = 1;

@@ -84,7 +84,6 @@ class ApiReportes{
         ];
 
  
-         $informacion['devoluciones'] = \Model\Devolucion::consulta('SELECT COALESCE(SUM(total),0) total, COALESCE(SUM(deuda_reducida),0) deuda, COALESCE(SUM(reembolso),0) reembolso FROM devoluciones WHERE fecha >= ?', [$fecha])[0];
          echo json_encode($informacion);
     }
 }

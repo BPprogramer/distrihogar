@@ -155,7 +155,8 @@ class ApiProductos
                 $stock, // Stock (HTML)
                 number_format($producto->precio_compra), // Precio de compra formateado
                 number_format($producto->precio_venta), // Precio de venta formateado
-                $acciones // Acciones (HTML)
+                $acciones, // Acciones (HTML)
+                (int) $producto->activo === 1 ? 'Activo' : 'Inactivo'
             ];
         }
 

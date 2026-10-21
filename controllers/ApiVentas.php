@@ -13,7 +13,6 @@ use Model\Producto;
 use Model\ProductosVenta;
 use Model\Usuario;
 use Model\Venta;
-use Model\Devolucion;
 use TCPDF;
 
 class ApiVentas
@@ -192,7 +191,7 @@ class ApiVentas
             $descuento = number_format($importe - $venta->total_factura);
             $importe = number_format($importe);
             $total = number_format($venta->total_factura);
-            $saldo = number_format(Devolucion::saldo($venta));
+            $saldo = number_format($venta->total_factura - $venta->recaudo);
             $recaudo = number_format($venta->recaudo);
             $bloque_correo = <<<EOF
             
@@ -263,13 +262,6 @@ class ApiVentas
 
 
 
-        $devoluciones = Devolucion::resumen($venta->id);
-        if ((float)$devoluciones['devoluciones_total'] > 0) {
-            $devTotal = number_format($devoluciones['devoluciones_total'], 2);
-            $devDeuda = number_format($devoluciones['deuda_reducida'], 2);
-            $devEfectivo = number_format($devoluciones['reembolsos'], 2);
-            $pdf->writeHTML('<div style="font-size:8px">Devoluciones: $'.$devTotal.'<br>Reducción de deuda: $'.$devDeuda.'<br>Reembolsos: $'.$devEfectivo.'</div>', false, false, false, false, '');
-        }
         $pdf->Output('example_001.pdf', 'I');
     }
     public static function ventas()
@@ -342,8 +334,6 @@ class ApiVentas
             return;
         }
         $venta = Venta::find($id);
-        if (!$venta) { echo json_encode(["type"=>"error", "msg"=>"Venta no encontrada."]); return; }
-        Devolucion::informar($venta);
         $productos = ProductosVenta::whereArrayJoin(['productos_venta.venta_id' => $venta->id], 'productos', 'id', 'producto_id');
         if ($venta->metodo_pago == 2) {
             $pago_cuotas = PagoCuota::where('venta_id', $venta->id);
@@ -360,7 +350,7 @@ class ApiVentas
     }
     public static function crear()
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        session_start();
         date_default_timezone_set('America/Bogota');
 
 
@@ -378,8 +368,6 @@ class ApiVentas
 
         $venta = new Venta();
         $venta->sincronizar($_POST);
-
-
 
 
 
@@ -490,7 +478,6 @@ class ApiVentas
             echo json_encode(['type' => 'error', 'msg' => 'Hubo un error, Intenta nuevamente']);
             return;
         }
-        if ($error = Devolucion::bloqueoVenta($id)) { echo json_encode(['type'=>'error', 'msg'=>$error]); return; }
         $fiados_asociados = PagoCuota::where('venta_id', $id);
 
         // if(!$fiados_asociados){
@@ -518,7 +505,7 @@ class ApiVentas
 
     public static function editar()
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        session_start();
         date_default_timezone_set('America/Bogota');
 
 
@@ -532,8 +519,6 @@ class ApiVentas
             return;
         }
 
-        if (!is_auth()) { echo json_encode(['type'=>'error', 'msg'=>'Inicie sesión.']); return; }
-        if ($error = Devolucion::bloqueoVenta($id)) { echo json_encode(['type'=>'error', 'msg'=>$error]); return; }
         $venta_actual = Venta::find($id);
         if (!$venta_actual) {
 
@@ -660,7 +645,7 @@ class ApiVentas
 
     public static function eliminar()
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
+        session_start();
         date_default_timezone_set('America/Bogota');
 
 
@@ -673,8 +658,6 @@ class ApiVentas
             return;
         }
 
-        if (!is_auth()) { echo json_encode(['type'=>'error', 'msg'=>'Inicie sesión.']); return; }
-        if ($error = Devolucion::bloqueoVenta($id)) { echo json_encode(['type'=>'error', 'msg'=>$error]); return; }
         $venta = Venta::find($id);
 
 
@@ -802,11 +785,8 @@ class ApiVentas
             if (!empty($fiados)) {
                 // echo json_encode( $fiados );
                 // return ;
-                foreach ($fiados as $fiado) {
-                    if (Devolucion::saldo($fiado, Devolucion::resumen($fiado->venta_id)) > 0) {
-                        $clientes[] = $cliente;
-                        break;
-                    }
+                if ($fiados[0]->total != $fiados[0]->recaudo) {
+                    $clientes[]  =  $cliente;
                 }
             }
 

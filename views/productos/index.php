@@ -45,6 +45,7 @@
 
 
                   <th class="text-center">Acciones</th>
+                  <th>ESTADO</th>
                 </tr>
               </thead>
 
