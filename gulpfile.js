@@ -34,7 +34,7 @@ function css() {
         .pipe(  dest('public/build/css') );
 }
 function javascript() {
-    return src(['src/js/busqueda-productos.js', paths.js])
+    return src(paths.js)
       .pipe(sourcemaps.init())
       .pipe(concat('bundle.js')) 
       .pipe(terser())

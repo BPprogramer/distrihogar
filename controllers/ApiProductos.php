@@ -10,10 +10,6 @@ class ApiProductos
 {
     public static function crear()
     {
-        if (!in_array($_POST['activo'] ?? '1', ['0', '1'], true)) {
-            echo json_encode(['type' => 'error', 'msg' => 'Seleccione un estado válido para el producto.']);
-            return;
-        }
 
         $producto = new Producto($_POST);
         $producto->formatearDatosFloat();
@@ -40,10 +36,6 @@ class ApiProductos
         $producto = Producto::find($_POST['id']);
         if (!$producto) {
             echo json_encode(['type' => 'error', 'msg' => 'Hay un Problema con el Producto']);
-            return;
-        }
-        if (isset($_POST['activo']) && !in_array($_POST['activo'], ['0', '1'], true)) {
-            echo json_encode(['type' => 'error', 'msg' => 'Seleccione un estado válido para el producto.']);
             return;
         }
         $producto->sincronizar($_POST);
@@ -98,21 +90,17 @@ class ApiProductos
             echo json_encode(['type' => 'error', 'msg' => 'Hubo un error, porfavor intente nuevamente']);
             return;
         }
-        $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
+        $id = $_POST['id'];
         if (!$id) {
             echo json_encode(['type' => 'error', 'msg' => 'Hubo un error Intenta Nuevamente']);
             return;
         }
-        $producto = Producto::find($id);
+        $producto = Producto::find($_POST['id']);
         if (!$producto) {
             echo json_encode(['type' => 'error', 'msg' => 'Hay un Problema con el producto']);
             return;
         }
         $resultado = $producto->eliminar();
-        if (!empty($resultado['ventas_asociadas'])) {
-            echo json_encode(['type' => 'error', 'msg' => 'No se puede eliminar este producto porque tiene ventas asociadas. Puede cambiar su estado a Inactivo.']);
-            return;
-        }
         if ($resultado['status']) {
             echo json_encode(['type' => 'success', 'msg' => 'El producto ha sido Eliminado con Exito']);
             return;
@@ -123,8 +111,7 @@ class ApiProductos
 
     public static function productos()
     {
-        $activo = ($_GET['activo'] ?? '1') === '0' ? 0 : 1;
-        $productos = Producto::whereArray(['activo' => $activo]);
+        $productos = Producto::all();
         $data = []; // Array para almacenar los datos de los productos
 
         foreach ($productos as $key => $producto) {
@@ -155,8 +142,7 @@ class ApiProductos
                 $stock, // Stock (HTML)
                 number_format($producto->precio_compra), // Precio de compra formateado
                 number_format($producto->precio_venta), // Precio de venta formateado
-                $acciones, // Acciones (HTML)
-                (int) $producto->activo === 1 ? 'Activo' : 'Inactivo'
+                $acciones // Acciones (HTML)
             ];
         }
 
