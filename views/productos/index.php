@@ -25,6 +25,13 @@
           </div>
           <!-- /.card-header -->
           <div class="card-body">
+            <div class="form-group">
+              <label for="filtro-activo">Estado de los productos</label>
+              <select id="filtro-activo" class="form-control w-auto">
+                <option value="1" selected>Activos</option>
+                <option value="0">Inactivos</option>
+              </select>
+            </div>
             <table id="tabla" class="display responsive table w-100 table-bordered table-striped">
               <thead>
                 <tr>
@@ -38,6 +45,7 @@
 
 
                   <th class="text-center">Acciones</th>
+                  <th>ESTADO</th>
                 </tr>
               </thead>
 
@@ -67,6 +75,13 @@
       </div>
       <div class="modal-body">
         <form id="productoForm">
+          <div class="form-group px-3 pt-3">
+            <label for="activo">Estado</label>
+            <select id="activo" name="activo" class="form-control">
+              <option value="1" selected>Activo</option>
+              <option value="0">Inactivo</option>
+            </select>
+          </div>
 
           <div class="card-body">
             <div class="row">

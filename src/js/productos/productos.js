@@ -13,6 +13,8 @@
         let id;
         const nombre = document.querySelector('#nombre');
         const codigo = document.querySelector('#codigo');
+        const activo = document.querySelector('#activo');
+        const filtroActivo = document.querySelector('#filtro-activo');
         const categoria_id = document.querySelector('#categoria_id');
         const proveedor_id = document.querySelector('#proveedor_id');
         const stock = document.querySelector('#stock');
@@ -27,6 +29,7 @@
         })
 
         mostrarProductos();
+        filtroActivo.addEventListener('change', () => tablaProductos.ajax.reload());
         //convertir el nombre a mayusculas
         nombre.addEventListener('input',function(e){
             nombre.value =  (e.target.value).toUpperCase();
@@ -85,12 +88,7 @@
                 eliminarToastAnterior();
             
                 if(resultado.type=='error'){
-                    $(document).Toasts('create', {
-                        class: 'bg-danger',
-                        title: 'Error',
-                     
-                        body: resultado.msg
-                      })
+                    Swal.fire({ icon: 'warning', title: 'No se pudo eliminar', text: resultado.msg });
                 }else{
 
                     $(document).Toasts('create', {
@@ -138,11 +136,17 @@
                         "previous": "Anterior"
                     }
                 },
-                ajax: '/api/productos',
+                ajax: {
+                    url: '/api/productos',
+                    data: datos => { datos.activo = filtroActivo.value; }
+                },
                 "deferRender":true,
                 "retrieve":true,
                 "proccesing":true,
-                responsive:true
+                responsive:true,
+                initComplete: function () {
+                    BusquedaProductos.configurarTabla(this.api());
+                }
                 
             });
             
@@ -255,6 +259,7 @@
             }
             datos.append('nombre', (nombre.value).trim());
             datos.append('codigo', (codigo.value).trim());
+            datos.append('activo', activo.value);
             datos.append('categoria_id', (categoria_id.value));
             datos.append('proveedor_id', (proveedor_id.value));
             datos.append('stock', (stock.value));
@@ -328,7 +333,7 @@
             // Elimina las clases de validación de los elementos
             $('#productoForm').find('.is-invalid').removeClass('is-invalid');
             if(id){
-                consultarProducto();
+                await consultarProducto();
             }
            
             await consultarCategorias();
@@ -356,6 +361,7 @@
             idProveedor = resultado.proveedor_id;
             nombre.value =  (resultado.nombre).toUpperCase();
             codigo.value = resultado.codigo;
+            activo.value = String(resultado.activo);
             stock.value = resultado.stock;
             stock_minimo.value = resultado.stock_minimo;
             precio_compra.value = (parseFloat(resultado.precio_compra)).toLocaleString('en');

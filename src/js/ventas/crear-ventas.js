@@ -103,15 +103,15 @@
 
                 });
 
-                $('#selectProductos').select2()
-                $('.select2bs4').select2({
+                BusquedaProductos.configurarSelector(selectProductos)
+                $('.select2bs4').not('#selectProductos').select2({
                     theme: 'bootstrap4'
                 })
             } catch (error) {
 
             }
-            $('#selectProductos').select2()
-            $('.select2bs4').select2({
+            BusquedaProductos.configurarSelector(selectProductos)
+            $('.select2bs4').not('#selectProductos').select2({
                 theme: 'bootstrap4'
             })
 
@@ -308,6 +308,8 @@
                 productoObj = {
                     id: productoVenta.id,
                     nombre: productoVenta.nombre,
+                    activo: Number(productoVenta.activo),
+                    cantidadOriginal: Number(productoVenta.cantidad),
                     cantidad: productoVenta.cantidad,
                     precio_compra: productoVenta.precio_compra,
                     precio_venta: productoVenta.precio_factura,
@@ -730,6 +732,7 @@
                 // inputCantidad.min = 1;
 
                 inputCantidad.value = cantidad;
+                if (producto.activo === 0) inputCantidad.max = producto.cantidadOriginal;
 
 
                 if (idAnterior == id && focusCantidad == true) {
@@ -745,6 +748,11 @@
                 }
 
                 inputCantidad.oninput = function () {
+                    if (producto.activo === 0 && Number(inputCantidad.value) > producto.cantidadOriginal) {
+                        Swal.fire({ icon: 'warning', text: 'Este producto está inactivo. Puede conservarlo o reducir su cantidad, pero no aumentarla.' });
+                        modificarTotalPorProducto(producto.cantidadOriginal, id, true);
+                        return;
+                    }
 
                     if (parseFloat(inputCantidad.value) > parseFloat(stock)) {
                         Swal.fire({
@@ -1041,6 +1049,10 @@
             try {
                 const respuesta = await fetch(`${location.origin}/api/producto?id=${id}`);
                 const resultado = await respuesta.json();
+                if (Number(resultado.activo) !== 1) {
+                    Swal.fire({ icon: 'warning', text: 'Este producto está inactivo y no se puede agregar a la venta.' });
+                    return;
+                }
 
 
 
@@ -1137,15 +1149,15 @@
                 });
 
                 $('#selectClientes').select2()
-                $('.select2bs4').select2({
+                $('.select2bs4').not('#selectProductos').select2({
                     theme: 'bootstrap4'
                 })
                 consultarInfoCliente(clienteId);
             } catch (error) {
 
             }
-            $('#selectProductos').select2()
-            $('.select2bs4').select2({
+            BusquedaProductos.configurarSelector(selectProductos)
+            $('.select2bs4').not('#selectProductos').select2({
                 theme: 'bootstrap4'
             })
 

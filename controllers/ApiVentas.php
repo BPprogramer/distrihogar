@@ -390,6 +390,13 @@ class ApiVentas
 
 
         try {
+            $productos = json_decode($_POST['productosArray'] ?? 'null');
+            $errorProductos = Producto::validarProductosVenta($productos);
+            if ($errorProductos) {
+                $db->rollback();
+                echo json_encode(['type' => 'error', 'msg' => $errorProductos]);
+                return;
+            }
             $resultado = $venta->guardar();
 
             $caja->guardar();
@@ -532,6 +539,13 @@ class ApiVentas
         }
         $db->begin_transaction();
         try {
+            $productos = json_decode($_POST['productosArray'] ?? 'null');
+            $errorProductos = Producto::validarProductosVenta($productos, $productos_venta);
+            if ($errorProductos) {
+                $db->rollback();
+                echo json_encode(['type' => 'error', 'msg' => $errorProductos]);
+                return;
+            }
             foreach ($productos_venta as $producto_venta) {
                 $producto = Producto::find($producto_venta->producto_id);
                 $producto->stock = intval($producto->stock) + intval($producto_venta->cantidad);
@@ -723,7 +737,7 @@ class ApiVentas
 
     public static  function productos()
     {
-        $productos = Producto::all();
+        $productos = Producto::whereArray(['activo' => 1]);
         echo json_encode($productos);
     }
     public static  function clientes()
